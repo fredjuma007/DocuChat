@@ -7,14 +7,21 @@ const Page = async () => {
     const searchParams = useSearchParams()
     const origin = searchParams.get('origin')
 
-
-    const {data, isLoading} = trpc.authCallback.useQuery(undefined, {
+    trpc.authCallback.useQuery(undefined, {
         onSuccess: ({success}) => {
             if(success) {
                 // user is synced with database
             router.push(origin ? '/${origin}' : '/dashboard')
             }
-        }
+        },
+        onError: (error) => {
+            if(error.data?.code === "UNAUTHORIZED") {
+                // user is not authenticated
+                router.push('/sign-in')
+            }
+        },
+        retry: true,
+        retryDelay: 500,
     }) 
 }
 
