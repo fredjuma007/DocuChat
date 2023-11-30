@@ -44,7 +44,7 @@ const UploadDropzone = () => {
 
         const progressInterval = startSimulatedProgress()
 
-        // simulate upload
+        // handling the upload
         const res = await startUpload(acceptedFile)
 
         if(!res) {
@@ -54,6 +54,20 @@ const UploadDropzone = () => {
                 variant: "destructive",
             })
         }
+
+        const [fileResponse] = res
+
+        const key = fileResponse.key
+
+        if(!key) {
+            return toast({
+                title: "Something went wrong",
+                description: "Please try again later",
+                variant: "destructive",
+            })
+        }
+
+        
 
         clearInterval(progressInterval)
         setUploadProgress(100)
