@@ -74,13 +74,13 @@ return <main className="mx-auto max-w-7xl md:p-10">
                     <Plus className='h-4 w-4' />
                     {format(
                       new Date(file.createdAt),
-                      'MMM yyyy'
+                      'dd MMM yyyy'
                     )}
                   </div>
 
                 <div className='flex items-center gap-2'>
                     <MessageSquare className='h-4 w-4' />
-                    mocked
+                    hello
                   </div>
 
                   <Button
