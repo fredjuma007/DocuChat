@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Loader2, RotateCw, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, RotateCw, Scale, Search } from 'lucide-react';
 import {Document, Page, pdfjs} from 'react-pdf'
 
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -22,6 +22,7 @@ import { DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 import SimpleBar from 'simplebar-react';
 import PdfFullscreen from './PdfFullscreen';
+import { set } from 'date-fns';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`
 
@@ -37,6 +38,11 @@ const PdfRenderer = ({url}: PdfRendererProps) => {
     const [currPage, setCurrPage] = useState<number>(1)
     const [scale, setScale] = useState<number>(1)
     const [rotation, setRotation] = useState<number>(0)
+    const [renderedScale, setRenderedScale] = useState<
+    number | null
+  >(null)
+
+    const isLoading = renderedScale !== scale
 
     const CustomPageValidator = z.object({
         page: z
@@ -79,6 +85,7 @@ const PdfRenderer = ({url}: PdfRendererProps) => {
                     setCurrPage((prev) => 
                     (prev - 1 > 1 ? prev -1 : 1)
                     )
+                    setValue("page", String(currPage - 1))
                 }}
                 variant="ghost" 
                 aria-label='previous page'>
@@ -106,7 +113,9 @@ const PdfRenderer = ({url}: PdfRendererProps) => {
                     currPage >= numPages
                 }
                 onClick={() => {
-                    setCurrPage((prev) => prev + 1 > numPages! ? numPages! : prev + 1)
+                    setCurrPage((prev) => 
+                    prev + 1 > numPages! ? numPages! : prev + 1)
+                    setValue("page", String(currPage - 1))
                 }}
                 variant="ghost" 
                 aria-label='next page'>
@@ -147,12 +156,14 @@ const PdfRenderer = ({url}: PdfRendererProps) => {
                     <RotateCw className="h-4 w-4" />
                 </Button>
 
-                <PdfFullscreen />
+                <PdfFullscreen fileUrl={url} />
             </div>
         </div>
 
         <div className="flex-1 w-full max-h-screen">
-                <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
+                <SimpleBar 
+                    autoHide={false} 
+                    className="max-h-[calc(100vh-10rem)]">
             <div ref={ref}>
                 <Document loading={
                 <div className='flex justify-center'>
@@ -169,11 +180,25 @@ const PdfRenderer = ({url}: PdfRendererProps) => {
                 onLoadSuccess={({numPages}) => setNumPages(numPages)}
                 file={url} 
                 className="max-h-full">
-                    <Page 
+                    {isLoading && renderedScale ? <Page 
                     width={width ? width : 1} 
                     pageNumber={currPage} 
                     scale={scale}
                     rotate={rotation}
+                    key={"@" + renderedScale}
+                    /> : null}
+
+                    <Page 
+                    className={cn(isLoading ? "hidden" : "")}
+                    width={width ? width : 1} 
+                    pageNumber={currPage} 
+                    scale={scale}
+                    rotate={rotation}
+                    key={"@" + scale}
+                    loading={<div className='flex justify-center'>
+                        <Loader2 className="my-24 h-6 w-6 animate-spin" />
+                        </div>}
+                        onRenderSuccess={() => setRenderedScale(scale)}
                     />
                 </Document>
             </div>
