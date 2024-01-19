@@ -1,10 +1,10 @@
 import { db } from "@/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { get } from "http";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf'
-import { pinecone } from "@/lib/pinecone";
+import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { getPineconeClient } from "@/lib/pinecone";
  
 const f = createUploadthing();
  
@@ -45,15 +45,38 @@ export const ourFileRouter = {
         const pageAmt = pageLevelDocs.length
 
         // vectorize and index the entire document
-
+        const pinecone = await getPineconeClient()
         const pineconeIndex = pinecone.Index('docuchat')
 
         const embeddings = new OpenAIEmbeddings({
           openAIApiKey: process.env.OPENAI_API_KEY
         })
 
+          await PineconeStore.fromDocuments(
+            pageLevelDocs, 
+            embeddings, {
+              //@ts-ignore
+            pineconeIndex,
+            namespace: createdFile.id,
+          }
+        )
+          await db.file.update({
+            data: {
+              uploadStatus: "Success",
+            },
+            where: {
+              id: createdFile.id,
+            }
+          })
       } catch (err) {
-
+        await db.file.update({
+          data: {
+            uploadStatus: "Failed",
+          },
+          where: {
+            id: createdFile.id,
+          }
+        })
       }
 
     }),
